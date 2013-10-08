@@ -4,8 +4,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from xml.dom import minidom
 import time, os, string, requests, re, sys
 
-site_domain = "http://www.yourdomain.com/"
+site_domain = "http://yoursite.com/"
 xml_file_name = "sitemap.xml"
+browser = "phantomjs" # options: phantomjs, firefox, chrome, ie
 
 def _slugify(text, delim=u'-'):
     _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
@@ -37,6 +38,8 @@ class SiteCapture:
 				sys.exit()
 		elif (driver == "firefox"):
 			self.driver = webdriver.Firefox()
+		elif (driver == "ie"):
+			self.driver = webdriver.Ie('drivers/iedriver')
 
 		self.domain = domain
 		self.site_map = site_map
@@ -46,7 +49,7 @@ class SiteCapture:
 		path = os.path.abspath(self.save_folder)
 		if not os.path.exists(path):
 			os.makedirs(path)
-		file_name = _slugify(page_url.replace(self.domain, ""))
+		file_name = _slugify(page_url.replace(self.domain, "").replace(":", ""))
 		if (file_name == ""):
 			file_name = "home"
 		full_path = path + "\\" + file_name + ".png"
@@ -61,9 +64,13 @@ class SiteCapture:
 		print (len(itemlist))
 		for item in itemlist:
 			page_url = (item.getElementsByTagName('loc')[0].firstChild.data)
-			self.driver.get(page_url)
-			self.take_screenshot(page_url)
+			page_url = page_url.replace("http://www.marianist.com/", site_domain) # REMOVE THIS!!!
+			try:
+				self.driver.get(page_url)
+				self.take_screenshot(page_url)
+			except:
+				print("Could not load " + page_url)
 
 
-capture = SiteCapture("phantomjs", site_domain, xml_file_name, "screenshots/")
+capture = SiteCapture(browser, site_domain, xml_file_name, "screenshots/")
 capture.run()
